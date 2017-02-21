@@ -1,0 +1,23 @@
+{
+  "name": "core.io-express-server",
+  "version": "0.0.0",
+  "description": "core.io Express server module",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/goliatone/core.io-express-server.git"
+  },
+  "keywords": [
+    "core.io",
+    "express"
+  ],
+  "author": "goliatone",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/goliatone/core.io-express-server/issues"
+  },
+  "homepage": "https://github.com/goliatone/core.io-express-server#readme"
+}
