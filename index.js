@@ -20,14 +20,19 @@ module.exports.Setup = require('./lib/setup');
  * Server Class
  */
 module.exports.Server = require('./lib/server');
+
 /**
  * Configurator class.
  */
 module.exports.Configurator = require('./lib/configurator');
+
 /**
  * initializer for express sub apps.
  */
 module.exports.initializeSubapp = require('./lib/initializeSubapp');
+
+module.exports.defaultApp = require('./lib/defaultApp');
+
 /**
  * createServer
  * @method createServer
