@@ -3,10 +3,16 @@
 Express server module.
 
 
+### Config
+
+- `basedir`: Used to create the path to `views` and `public`.
+
 ### TODO
 - [ ] Handle unique assets, like favicon.
     config: { favicon: <ABSOLUTE_PATH>}
-
+- [ ] Provide a way to override layout for error.ejs
+- [ ] Default app: take config options
+    - merge middleware
 
 <!--
 Integrate with:
