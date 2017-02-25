@@ -5,6 +5,10 @@ Express server module.
 
 ### Config
 
+- `port`:
+    - `process.env.PORT`
+    - `process.env.NODE_APP_PORT`
+    - 3000
 - `basedir`: Used to create the path to `views` and `public`.
 
 ### TODO
