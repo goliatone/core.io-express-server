@@ -11,7 +11,7 @@ module.exports = function(app, config){
 
     router.get('/hello', policies, (req, res)=>{
         console.log('/hello');
-        res.status(200).send('<b>Hello</b>');
+        res.status(200).send('<b>Hello '+ req.user.name + '</b>');
     });
 
     router.get('/testing', [], (req, res)=>{
