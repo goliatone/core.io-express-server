@@ -18,7 +18,7 @@ module.exports.hash = hash;
 
 
 function compare(user, password){
-    return bcrypt.compareAsync(password, user.password);
+    return bcrypt.compareAsync(password, user.password || '');
 }
 
 module.exports.compare = compare;
