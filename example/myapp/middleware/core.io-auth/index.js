@@ -30,6 +30,8 @@ module.exports = function(app, config){
      * Initialize session passport
      * We should be able to move this to the
      * auth submodule and pull from there.
+     * This HAS to come before registering
+     * router or app routes...
      */
     app.use(passport.initialize());
 
@@ -76,7 +78,7 @@ module.exports = function(app, config){
     //////////////////////////////////////////
     /// LOAD STRATEGIES
     //////////////////////////////////////////
-    app.post('/login', (req, res, next) => {
+    router.post('/login', (req, res, next) => {
         passport.authenticate('local', (err, user, params) => {
             if (err) return next(err);
             if (!user){
