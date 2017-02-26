@@ -1,0 +1,13 @@
+<form class="form-horizontal form-signin" action="/users" method="post" role="form">
+    <% if(this.csrf_token) {%>
+        <input type="hidden" name="_csrf" value="<%-csrf_token%>"/>
+    <%}%>
+
+    <input class="form-control" id="email" type="text" name="email" placeholder="Email" value="<%=this.user ? this.user.email : '' %>"/>
+    <input class="form-control" id="name" type="text" name="name" placeholder="Full name" value="<%=this.user ? this.user.name : ''%>"/>
+    <input class="form-control" id="username" type="text" name="username" placeholder="Username" value="<%=this.user ? this.user.username : ''%>"/>
+    <input class="form-control" id="password" type="password" name="password" placeholder="Password"/><br/>
+    <div class="text-center">
+        <button class="btn btn-primary" type="submit">Sign up</button><br/><br/><a class="show-login" href="/login">Log in</a>
+    </div>
+</form>

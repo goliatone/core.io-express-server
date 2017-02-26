@@ -1,0 +1,10 @@
+<h1 class="text-center">Login</h1>
+
+<form action="/login" method="post" role="form">
+    <input type="hidden" name="_csrf" value="#{csrf_token}"/>
+    <p class="col-sm-offset-2 error"></p>
+    <input class="form-control" id="email" type="email" placeholder="Email" name="email"/>
+    <input class="form-control" id="password" type="password" placeholder="Password" name="password"/><br/>
+    <button class="btn btn-primary btn-block" type="submit">Log in</button><br/>
+    <div class="text-center"><a class="show-signup" href="/signup">Sign up</a></div>
+</form>
