@@ -38,8 +38,12 @@ MyApp(context, {
             });
         }
     },
+    policies: {
+        'GET /hello': [
+            require('./myapp/middleware/isAuthenticated')
+        ],
+    },
     middleware: {
-        isAuthenticated: require('./myapp/middleware/isAuthenticated'),
         passport: require('./myapp/middleware/core.io-auth'),
         /*
          * This actually indicates which middleware
@@ -54,7 +58,7 @@ MyApp(context, {
             'bodyParser',
             'cookieParser',
             'session',
-            'isAuthenticated',
+            // 'isAuthenticated',
             'passport',
             'flash',
             'expressStatic',
