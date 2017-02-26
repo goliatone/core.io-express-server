@@ -1,5 +1,5 @@
 'use strict';
-
+const extend = require('gextend');
 const Server = require('..').init;
 
 let context = {
@@ -20,6 +20,14 @@ let context = {
 
 const MyApp = require('..').initializeSubapp('root');
 
+let _data = {
+    _i: 1,
+    1: {
+        id: 1,
+        email: 'hello@goliatone.com'
+    }
+};
+
 MyApp(context, {
     moduleid: 'myapp',
     basedir: './myapp',
@@ -32,10 +40,30 @@ MyApp(context, {
     },
     passport: {
         findUserById: function(id){
-            return Promise.resolve({
-                id: 1,
-                email: 'hello@goliatone.com'
+            return Promise.resolve(_data[id]);
+        },
+        findUserBy: function(prop, val){
+            return Promise.resolve(_data[2]);
+        },
+        createUser: function(user){
+            console.log('createUser', JSON.stringify(user, null, 4));
+
+            const cryptoUtils = require('./myapp/middleware/core.io-auth/cryptoUtils');
+            ++_data._i;
+            let i = _data._i;
+            user.id = i;
+            _data[i] = user;
+
+            return cryptoUtils.hash(user).then((user)=>{
+                console.log('Added user:', user);
+                console.log(Object.keys(_data));
+                return user;
             });
+        },
+        cleanUser: function(user){
+            let clone = extend({}, user);
+            delete clone.password;
+            return clone;
         }
     },
     policies: {
