@@ -18,6 +18,7 @@
   "homepage": "https://github.com/goliatone/core.io-auth#readme",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "bluebird": "^3.4.7"
+    "bluebird": "^3.4.7",
+    "passport-local": "^1.0.0"
   }
 }
