@@ -27,6 +27,15 @@ module.exports = function(app, config){
     });
 
     /*
+     * Initialize session passport
+     * We should be able to move this to the
+     * auth submodule and pull from there.
+     */
+    app.use(passport.initialize());
+
+    app.use(passport.session());
+
+    /*
      * Create all default routes so we can handle
      * authentication flow:
      * - login
@@ -56,14 +65,13 @@ module.exports = function(app, config){
     });
 
     router.post('/signup', function(req, res){
-        res.render('signup', locals);
-
-        /*config.createUser(req.body).then((user)=>{
-            req.redirect('/login');
+        // res.render('signup', locals);
+        config.passport.createUser(req.body).then((user)=>{
+            res.redirect('/login');
         }).catch((err)=>{
             locals.user = req.body;
             res.render('signup', locals);
-        });*/
+        });
     });
     //////////////////////////////////////////
     /// LOAD STRATEGIES
@@ -71,13 +79,21 @@ module.exports = function(app, config){
     app.post('/login', (req, res, next) => {
         passport.authenticate('local', (err, user, params) => {
             if (err) return next(err);
-            if (!user) return res.status(401).json({error: params ? params.message : 'Invalid login'});
-            req.login(user, {}, error => {
-                if (error) return res.status(500).json({error: error.message});
-                res.json({
-                    user: user,
-                    returnTo: (req.session && req.session.returnTo) ? req.session.returnTo : '/'
+            if (!user){
+                return res.status(401).json({
+                    error: params ? params.message : 'Invalid login'
                 });
+            }
+            user = config.passport.cleanUser(user);
+
+            req.login(user, {}, error => {
+                if (error){
+                    return res.status(500).json({error: error.message});
+                }
+                console.log('login: req.user', req.user);
+                res.locals.user = user;
+                res.redirect((req.session && req.session.returnTo) ? req.session.returnTo : '/');
+
                 return null;
             });
         })(req, res, next);
@@ -89,7 +105,7 @@ module.exports = function(app, config){
         },(id, password, done) => {
         console.log('local strategy: id %s password %s', id, password);
         let authUser;
-        return findUserById(id).then((user) => {
+        return config.passport.findUserBy(id).then((user) => {
             console.log('findUserById:', id, user);
             if (!user) return false;
             authUser = user;
@@ -106,17 +122,6 @@ module.exports = function(app, config){
      * Use all declared strategies
      */
     app.use('/', router);
-
-
-
-    /*
-     * Initialize session passport
-     * We should be able to move this to the
-     * auth submodule and pull from there.
-     */
-    app.use(passport.initialize());
-
-    app.use(passport.session());
 };
 
 module.exports.applyPolicies = require('./applyPolicies');
