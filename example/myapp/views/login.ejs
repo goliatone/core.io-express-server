@@ -1,5 +1,10 @@
 <h1 class="text-center">Login</h1>
-
+<% if (flash.info) { %>
+<p><%= flash.info %></p>
+<% } %>
+<% if (flash.error) { %>
+<p><%= flash.error %></p>
+<% } %>
 <form action="/login" method="post" role="form">
     <input type="hidden" name="_csrf" value="#{csrf_token}"/>
     <p class="col-sm-offset-2 error"></p>
