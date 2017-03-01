@@ -24,4 +24,11 @@ For the API part. Or maybe just the CRUD module?
 https://github.com/apiaryio/dredd
 
 https://apiblueprint.org/tools.html
+
+Create responses:
+res.ok();
+res.send404();
+res.sendError();
+
+https://github.com/balderdashy/sails/blob/e7947170dd60a96fb5cdac2ab00de170d6854074/lib/hooks/responses/defaults/notFound.js
 -->
