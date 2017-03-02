@@ -1,17 +1,19 @@
 /*jshint esversion:6, node:true*/
 'use strict';
 
-var express = require('express');
-var router = express.Router();
-var applyPolicies = require('../middleware/core.io-auth').applyPolicies;
+const extend = require('gextend');
+const express = require('express');
+const router = express.Router();
+const applyPolicies = require('../middleware/core.io-auth').applyPolicies;
 
 module.exports = function(app, config){
 
-    let policies = applyPolicies('GET /hello', app, config);
+    let policies = applyPolicies('GET /profile', app, config);
 
-    router.get('/hello', policies, (req, res)=>{
-        console.log('/hello');
-        res.status(200).send('<b>Hello '+ req.user.name + '</b>');
+    router.get('/profile', policies, (req, res)=>{
+        res.render('pages/profile', extend({}, config.locals, {
+            user:req.user
+        }));
     });
 
     router.get('/testing', [], (req, res)=>{
