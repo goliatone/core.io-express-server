@@ -46,7 +46,10 @@ initMyApp(context, {
          * - createUser
          * - cleanUser
          */
-        model: PassportModel
+        model: PassportModel,
+        strategies: {
+            google:{}
+        }
     },
     policies: {
         'GET /profile': [
