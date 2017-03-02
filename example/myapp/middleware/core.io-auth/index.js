@@ -1,3 +1,4 @@
+/*jshint esversion:6, node:true*/
 'use strict';
 
 const extend = require('gextend');
@@ -10,7 +11,15 @@ module.exports = function(app, config){
     console.log('--- passport');
     console.log(Object.keys(config));
 
-    let findUserById = config.passport.findUserById;
+    /*
+     * TODO: Normalize names. Should we match
+     * Waterline methods or have desriptive
+     * names?
+     */
+    let findOne = config.passport.model.findOne;
+    let createUser = config.passport.model.createUser;
+    let findUserById = config.passport.model.findUserById;
+    let cleanUser = config.passport.model.cleanUser || _cleanUser;
 
     /*
      * We need to provide passport with a
@@ -67,7 +76,7 @@ module.exports = function(app, config){
 
     router.post('/signup', function(req, res){
         // res.render('signup', locals);
-        config.passport.createUser(req.body).then((user)=>{
+        createUser(req.body).then((user)=>{
             res.flash('info', 'User ' + user.name + ' created.');
             res.redirect('/login');
         }).catch((err)=>{
@@ -78,6 +87,15 @@ module.exports = function(app, config){
     //////////////////////////////////////////
     /// LOAD STRATEGIES
     //////////////////////////////////////////
+    /*
+     * Default cleanUser function.
+     */
+    function _cleanUser(user){
+        let clone = extend({}, user);
+        delete clone.password;
+        return clone;
+    }
+
     router.post('/login', (req, res, next) => {
         passport.authenticate('local', (err, user, params) => {
             if (err) return next(err);
@@ -87,7 +105,7 @@ module.exports = function(app, config){
                     error: params ? params.message : 'Invalid login'
                 });
             }
-            user = config.passport.cleanUser(user);
+            user = cleanUser(user);
 
             req.login(user, {}, error => {
                 if (error){
@@ -104,19 +122,24 @@ module.exports = function(app, config){
     });
 
     let LocalStrategy = require('passport-local');
-    // usernameField: 'email',
-    // passwordField: 'passwd',
-    // passReqToCallback: true,
-    // session: false
-    passport.use(new LocalStrategy({
-            usernameField: 'email',
-            passReqToCallback: true,
-        },(req, id, password, done) => {
+
+    let strategyConfig = {
+        usernameField: 'email',
+        passReqToCallback: true,
+        // usernameField: 'email',
+        // passwordField: 'passwd',
+        // session: false
+    };
+
+    passport.use(new LocalStrategy(strategyConfig,(req, id, password, done) => {
         console.log('local strategy: id %s password %s', id, password);
 
         let authUser;
-        return config.passport.findUserBy(id).then((user) => {
-            console.log('findUserById:', id, user);
+        let query = {};
+        query[strategyConfig.usernameField || 'username'] = id;
+
+        return findOne(query).then((user) => {
+            console.log('findOne:', id, user);
             if (!user) return false;
             authUser = user;
             return crypto.compare(user, password);
@@ -127,6 +150,8 @@ module.exports = function(app, config){
         })
         .catch(done);
     }));
+
+
 
     /*
      * Use all declared strategies
