@@ -52,7 +52,7 @@ module.exports = function(app, config){
     });
 
 
-    passport.protocols = rquire('./protocols')(passport, config);
+    passport.protocols = require('./protocols')(passport, config);
 
     /*
      * Extend passport object with an `endpoint`
@@ -115,7 +115,7 @@ module.exports = function(app, config){
         next(new Error('Invalid action'));
     };
 
-    pasport.connect = function(req, query, profile, next){
+    passport.connect = function(req, query, profile, next){
         let user = {};
 
         let provider = profile.provider || req.param('provider');
@@ -141,6 +141,49 @@ module.exports = function(app, config){
         if(!user.username && !user.email){
             return next(new Error('Neither email or username was available'));
         }
+
+        Passport.findOne({
+            provider: provider,
+            identifier: query.identifier.toString()
+        }).then((passport)=> {
+            //A new user is attempting to sign up using a 3rd
+            //party auth provider.
+            //Create a ne user and assign them a passport.
+            if(!req.user){
+                if(!passport){
+                    return PassportUser.create(user).then((record)=>{
+                        user = record;
+                        query.user = user.id;
+                        return Passport.create(query);
+                    }).then((passport)=>{
+                        next(null, user);
+                    }).catch(next);
+                }
+                //An existing user is trying to log in using an
+                //already connected passport. Associate user to
+                //passport.
+                if(query.tokens && query.tokens != passport.tokens){
+                    passport.tokens = query.tokens;
+                }
+                return passport.save().then(()=>{
+                    return PassportUser.findOne(passport.user);
+                }).then((user)=>{
+                    next(null, user);
+                }).catch(next);
+            }
+            //User currently logged in, trying to connect a new passport.
+            //Create and assing a new passport to the user.
+            if(!passport){
+                query.user = req.user.id;
+                return Passport.create(query).then((passport)=>{
+                    next(null, rq.user);
+                }).catch(next);
+            }
+            //not sure what's going on here. We do have a session.
+            //Just pass it along...Back button?
+            next(null, req.user);
+
+        }).catch(next);
     };
 
     passport.disconnect = function(req, res, next){
@@ -157,6 +200,65 @@ module.exports = function(app, config){
             return user;
         }).catch(next);
     };
+
+    function loadStrategies(passport, strategies){
+        let strategy;
+        Object.key(strategies).map((key)=>{
+            strategy = strategies[key];
+            let options = {
+                passReqToCallback: true
+            };
+
+            let Strategy;
+
+            if(key === 'local'){
+                options = extend({
+                    usernameField: 'identifier'
+                });
+
+                if(strategies.local){
+                    Strategy = strategies[key].strategy;
+                    passport.use(new Strategy(options, passport.protocols.local.login));
+                }
+                return;
+            }
+            let protocol = strategies[key].protocol;
+            let callback = strategies[key].callback;
+
+            if(!callback){
+                callback = require('path').join('auth', key, 'callback');
+            }
+            Strategy = strategies[key].strategy;
+            let baseUrl = '';
+
+            if(config.baseUrl){
+                baseUrl = config.baseUrl;
+            } else {
+                config.logger.warn('Please set baseUrl configuration value!');
+                //This WILL THROW :)
+                baseUrl = app.baseUrl();
+            }
+
+            const url = require('url');
+
+            switch (protocol) {
+                case 'oauth':
+                case 'oauth2':
+                    options.callbackURL = url.resolve(baseUrl, callback);
+                    break;
+                case 'openid':
+                    options.returnURL = url.resolve(baseUrl, callback);
+                    options.realm = baseUrl;
+                    options.profile = true;
+                    break;
+            }
+            options = extend(options, strategies[key].options);
+
+            passport.use(new Strategy(options, passport.protocols[protocol]));
+        });
+    }
+
+    loadStrategies(passport, config.passport.strategies);
 
     /*
      * Initialize session passport
@@ -283,7 +385,7 @@ module.exports = function(app, config){
         const K = require('gkeypath');
 
         let includeToken = req.query.includeToken;
-        let url = K.get(req, 'session.returnTo', req.query.next;
+        let url = K.get(req, 'session.returnTo', req.query.next);
         let accessToken = K.get(req, 'session.tokens.accessToken');
 
         if(includeToken && accessToken){
