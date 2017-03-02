@@ -33,10 +33,20 @@ let PassportUser = {
             return user;
         });
     },
+    createPassport: function(passport){
+        console.log('createPassport', JSON.stringify(passport, null, 4));
+        return Promise.resolve(passport);
+    },
     cleanUser: function(user){
         let clone = extend({}, user);
         delete clone.password;
         return clone;
+    },
+    deleteUser: function(user){
+        return Promise.resolve();
+    },
+    updateUser: function(user){
+        return Promise.resolve();
     }
 };
 
