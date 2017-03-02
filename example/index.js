@@ -1,7 +1,15 @@
+/*jshint esversion:6, node:true*/
 'use strict';
-const extend = require('gextend');
-const Server = require('..').init;
 
+const extend = require('gextend');
+
+const PassportModel = require('./myapp/models/PassportUser');
+
+/*
+ * This is a mock object providing
+ * the minimun methods that context
+ * should implement.
+ */
 let context = {
     getLogger: ()=> console,
     resolve: ()=> Promise.resolve(),
@@ -18,59 +26,34 @@ let context = {
     }
 };
 
-const MyApp = require('..').initializeSubapp('root');
+const initServer = require('..').init;
+const initMyApp = require('..').initializeSubapp('root');
 
-let _data = {
-    _i: 1,
-    1: {
-        id: 1,
-        email: 'hello@goliatone.com'
-    }
-};
 
-MyApp(context, {
-    moduleid: 'myapp',
-    basedir: './myapp',
+initMyApp(context, {
     mount: '/',
-    routes: {
-        path: ['./myapp/routes']
-    },
+    moduleid: 'myapp',
     locals: {
-        title: 'MyApp Test'
+        title: 'MyApp Test',
+        layout: 'layout'
     },
     passport: {
-        findUserById: function(id){
-            return Promise.resolve(_data[id]);
-        },
-        findUserBy: function(prop, val){
-            return Promise.resolve(_data[2]);
-        },
-        createUser: function(user){
-            console.log('createUser', JSON.stringify(user, null, 4));
-
-            const cryptoUtils = require('./myapp/middleware/core.io-auth/cryptoUtils');
-            ++_data._i;
-            let i = _data._i;
-            user.id = i;
-            _data[i] = user;
-
-            return cryptoUtils.hash(user).then((user)=>{
-                console.log('Added user:', user);
-                console.log(Object.keys(_data));
-                return user;
-            });
-        },
-        cleanUser: function(user){
-            let clone = extend({}, user);
-            delete clone.password;
-            return clone;
-        }
+        /*
+         * Model is an object which needs to
+         * provide the following methods:
+         * - findUserBy
+         * - findUserById
+         * - createUser
+         * - cleanUser
+         */
+        model: PassportModel
     },
     policies: {
-        'GET /hello': [
+        'GET /profile': [
             require('./myapp/middleware/isAuthenticated')
         ],
     },
+
     middleware: {
         passport: require('./myapp/middleware/core.io-auth'),
         /*
@@ -98,4 +81,4 @@ MyApp(context, {
     }
 });
 
-Server(context, {});
+initServer(context, {});
