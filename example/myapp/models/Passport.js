@@ -11,36 +11,30 @@ let _data = {
     }
 };
 
-let PassportUser = {
+let Passport = {
     findOneById: function(id){
         return Promise.resolve(_data[id]);
     },
     findOne: function(...query){
         return Promise.resolve(_data[2]);
     },
-    create: function(user){
-        console.log('PassportUser:create', JSON.stringify(user, null, 4));
+    create: function(record){
+        console.log('createPassport', JSON.stringify(record, null, 4));
 
         ++_data._i;
         let i = _data._i;
-        user.id = i;
-        _data[i] = user;
+        record.id = i;
+        _data[i] = record;
 
-        user.toJSON = function(){
+        record.toJSON = function(){
             let clone = extend({}, this);
             delete clone.password;
             return clone;
         };
-        
-        return Promise.resolve(user);
 
-        // return cryptoUtils.hash(user).then((user)=>{
-        //     console.log('Added user:', user);
-        //     console.log(Object.keys(_data));
-        //     return user;
-        // });
+        return Promise.resolve(record);
     },
-    destroy: function(query){
+    destroy: function(user){
         return Promise.resolve();
     },
     update: function(user){
@@ -48,4 +42,4 @@ let PassportUser = {
     }
 };
 
-module.exports = PassportUser;
+module.exports = Passport;

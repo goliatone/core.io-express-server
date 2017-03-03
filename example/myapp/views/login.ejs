@@ -5,11 +5,29 @@
 <% if (flash.error) { %>
 <p><%= flash.error %></p>
 <% } %>
-<form action="/login" method="post" role="form">
+<form action="/auth/local" method="post" role="form">
     <input type="hidden" name="_csrf" value="#{csrf_token}"/>
     <p class="col-sm-offset-2 error"></p>
     <input class="form-control" id="email" type="email" placeholder="Email" name="email"/>
     <input class="form-control" id="password" type="password" placeholder="Password" name="password"/><br/>
     <button class="btn btn-primary btn-block" type="submit">Log in</button><br/>
-    <div class="text-center"><a class="show-signup" href="/signup">Sign up</a></div>
+    <div class="text-center"><a class="show-signup" href="/register">Sign up</a></div>
 </form>
+
+<div class="panel">
+    <% if (errors) {%>
+      <% errors.forEach(function (error) { %>
+        <%= __(error) %>
+      <% }) %>
+    <% } %>
+    
+    <% if (Object.keys(providers).length) {%>
+        <% Object.keys(providers).map(function (key) {%>
+            <h5>Login using your <%= providers[key].label %> Account</h5>
+            <hr/>
+            <a href="/auth/<%= providers[key].slug %>" role="button" class="button expand">
+                <%= providers[key].label %></a>
+            </a>
+        <% }) %>
+    <% } %>
+</div>

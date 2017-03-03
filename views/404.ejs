@@ -1,8 +1,8 @@
 <div class="panel error">
     <h1>404... Something's fishy here.</h1>
     <h2>
-    <% if (typeof error !== 'undefined') { %>
-        <%- error %>
+    <% if (typeof message !== 'undefined') { %>
+        <%- message %>
     <% } else { %>
         The page you were trying to reach doesn't exist.
     <% } %>
