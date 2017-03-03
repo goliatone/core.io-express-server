@@ -3,7 +3,7 @@
 module.exports = function appVariables(app, config){
 
     return function $isAuthenticated(req, res, next){
-        console.log('Is authenticated');
+        
         if(req.isAuthenticated()) next();
         else {
             req.session.returnTo = req.path;
