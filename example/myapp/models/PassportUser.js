@@ -21,7 +21,6 @@ let PassportUser = {
     create: function(user){
         console.log('PassportUser:create', JSON.stringify(user, null, 4));
 
-        const cryptoUtils = require('../middleware/core.io-auth/cryptoUtils');
         ++_data._i;
         let i = _data._i;
         user.id = i;
@@ -32,6 +31,7 @@ let PassportUser = {
             delete clone.password;
             return clone;
         };
+        
         return Promise.resolve(user);
 
         // return cryptoUtils.hash(user).then((user)=>{
