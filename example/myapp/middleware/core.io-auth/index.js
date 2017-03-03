@@ -7,6 +7,17 @@ const Keypath = require('gkeypath');
 const passport = require('passport');
 const crypto = require('./cryptoUtils');
 
+/**
+ * Provide Passport.js support for our
+ * core.io-express-server application.
+ * The `app` paramter can be an Express app
+ * or, more likely, a subapp.
+ *
+ * @method exports
+ * @param  {Object} app    Express app or subapp
+ * @param  {Object} config config.server value.
+ * @return {void}
+ */
 module.exports = function(app, config){
 
     if(!config.logger) config.logger = console;
@@ -27,15 +38,8 @@ module.exports = function(app, config){
      *     return Passport;
      * }
      */
-    let findOne = config.passport.model.findOne;
-    let createUser = config.passport.model.createUser;
-    let findUserById = config.passport.model.findUserById;
-    let cleanUser = config.passport.model.cleanUser || _cleanUser;
-    let deleteUser = config.passport.model.deleteUser;
-    let updateUser = config.passport.model.updateUser;
-
-    let createPassport = config.passport.model.createPassport;
-    let findPassport = config.passport.mdoel.findPassport;
+    let Passport = config.passport.getPassport();
+    let PassportUser = config.passport.getPassportUser();
 
     /*
      * We need to provide passport with a
@@ -45,7 +49,7 @@ module.exports = function(app, config){
     passport.serializeUser((user, done) => done(null, user.id));
 
     passport.deserializeUser((id, done) => {
-        return findUserById(id).then(user => {
+        return PassportUser.findOne(id).then(user => {
             done(null, user);
             return user;
         }).catch(done);
@@ -59,14 +63,17 @@ module.exports = function(app, config){
      * method to handle all 3rd party providers.
      */
     passport.endpoint = function(req, res){
-        let strategies = config.passport;
-        let provider = req.param('provider');
+        let strategies = config.passport.strategies;
+
+        let provider = _param(req, 'provider');
         let options = {};
 
+        console.log('passport.endpoint: provider %s', provider);
         /*
          * We did not define the provider.
          */
         if(!strategies.hasOwnProperty(provider)){
+            config.logger.warn('passport.endpoint: does not have provider %s', provider);
             return res.redirect('/login');
         }
 
@@ -82,12 +89,11 @@ module.exports = function(app, config){
      * Create an authentication callback endpoint.
      */
     passport.callback = function(req, res, next){
-        let action = req.param('action');
-        let provider = req.param('provider', 'local');
+        let action = _param(req, 'action');
+        let provider = _param(req, 'provider', 'local');
 
-        if(action === 'disconnect' && req.user){
-            return this.disconnect(req, res, next);
-        } else {
+        if(action === 'disconnect'){
+            if(req.user) return this.disconnect(req, res, next);
             next(new Error('Invalid action'));
         }
 
@@ -100,9 +106,16 @@ module.exports = function(app, config){
                 return this.protocols.local.connect(req, res, next);
             }
 
+            if(action === 'update' && req.user){
+                //TODO: Need to make a better flow here.
+                return this.protocols.local.update(req, res, next);
+            }
+
             if(action === 'disconnect' && req.user){
                 return this.protocols.local.disconnect(req, res, next);
             }
+
+            next(new Error('Invalid action'));
 
         } else {
             if( action === 'disconnect' && req.user ){
@@ -111,14 +124,12 @@ module.exports = function(app, config){
 
             this.authenticate(provider, next)(req, res, req.next);
         }
-
-        next(new Error('Invalid action'));
     };
 
     passport.connect = function(req, query, profile, next){
         let user = {};
 
-        let provider = profile.provider || req.param('provider');
+        let provider = profile.provider || _param(req, 'provider');
 
         req.session.tokens = query.tokens;
 
@@ -132,6 +143,17 @@ module.exports = function(app, config){
 
         if(profile.emails && profile.emails[0]){
             user.email = profile.emails[0].value;
+        }
+
+        //TODO: Make filters!!
+        if(config.passport.strategies[provider].restrictToDomain){
+            if(!user.email) return false;
+            var domain = user.email.split('@')[1];
+            var hostedDomain = config.passport.strategies[provider].restrictToDomain;
+            hostedDomain = hostedDomain.replace('www.', '');
+            if(domain !== hostedDomain){
+                return next({status: 401, message: 'Unauthorized domain.'});
+            }
         }
 
         if(profile.username){
@@ -159,9 +181,12 @@ module.exports = function(app, config){
                         next(null, user);
                     }).catch(next);
                 }
-                //An existing user is trying to log in using an
-                //already connected passport. Associate user to
-                //passport.
+                /*
+                 * An existing user is trying to log in using an
+                 * already connected passport. Associate user to
+                 * passport.
+                 * TODO: Ensure we do a proper comparison of tokens
+                 */
                 if(query.tokens && query.tokens != passport.tokens){
                     passport.tokens = query.tokens;
                 }
@@ -176,7 +201,7 @@ module.exports = function(app, config){
             if(!passport){
                 query.user = req.user.id;
                 return Passport.create(query).then((passport)=>{
-                    next(null, rq.user);
+                    next(null, req.user);
                 }).catch(next);
             }
             //not sure what's going on here. We do have a session.
@@ -188,77 +213,23 @@ module.exports = function(app, config){
 
     passport.disconnect = function(req, res, next){
         let user = req.user;
-        let provider = req.param('provider');
+        let provider = _param(req, 'provider');
 
-        return findOne({
+        return Passport.findOne({
             provider: provider,
             user: user.id
         }).then((record)=>{
-            return deleteUser(record.id);
+            return PassportUser.destroy(record.id);
         }).then(()=>{
             next(null, user);
             return user;
         }).catch(next);
     };
 
-    function loadStrategies(passport, strategies){
-        let strategy;
-        Object.key(strategies).map((key)=>{
-            strategy = strategies[key];
-            let options = {
-                passReqToCallback: true
-            };
 
-            let Strategy;
+    const loadStrategies = require('./strategies/loader');
 
-            if(key === 'local'){
-                options = extend({
-                    usernameField: 'identifier'
-                });
-
-                if(strategies.local){
-                    Strategy = strategies[key].strategy;
-                    passport.use(new Strategy(options, passport.protocols.local.login));
-                }
-                return;
-            }
-            let protocol = strategies[key].protocol;
-            let callback = strategies[key].callback;
-
-            if(!callback){
-                callback = require('path').join('auth', key, 'callback');
-            }
-            Strategy = strategies[key].strategy;
-            let baseUrl = '';
-
-            if(config.baseUrl){
-                baseUrl = config.baseUrl;
-            } else {
-                config.logger.warn('Please set baseUrl configuration value!');
-                //This WILL THROW :)
-                baseUrl = app.baseUrl();
-            }
-
-            const url = require('url');
-
-            switch (protocol) {
-                case 'oauth':
-                case 'oauth2':
-                    options.callbackURL = url.resolve(baseUrl, callback);
-                    break;
-                case 'openid':
-                    options.returnURL = url.resolve(baseUrl, callback);
-                    options.realm = baseUrl;
-                    options.profile = true;
-                    break;
-            }
-            options = extend(options, strategies[key].options);
-
-            passport.use(new Strategy(options, passport.protocols[protocol]));
-        });
-    }
-
-    loadStrategies(passport, config.passport.strategies);
+    loadStrategies(passport, config.passport.strategies, config);
 
     /*
      * Initialize session passport
@@ -291,6 +262,78 @@ module.exports = function(app, config){
      * GET /auth/google/create AuthController.callback
      */
     let AuthController = {
+        /**
+         * We want to only enable this to ppl we want to offer
+         * a registration token.
+         * A) Create token, send link with token
+         * B) Check token vs database, if valid show
+         * C) Send to token expired
+         *
+         * Render the registration page
+         *
+         * Just like the login form, the registration form is just simple HTML:
+         *
+        <form role="form" action="/auth/local/register" method="post">
+          <input type="text" name="username" placeholder="Username">
+          <input type="text" name="email" placeholder="Email">
+          <input type="password" name="password" placeholder="Password">
+          <button type="submit">Sign up</button>
+        </form>
+        *
+        * @param {Object} req
+        * @param {Object} res
+        */
+        register: function(req, res){
+
+            let locals = {
+                errors: res.flash('error')
+            };
+
+            res.render('register', locals);
+        },
+        /**
+         * Render the login page
+         *
+         * The login form itself is just a simple HTML form:
+         *
+            <form role="form" action="/auth/local" method="post">
+                <input type="text" name="identifier" placeholder="Username or Email">
+                <input type="password" name="password" placeholder="Password">
+                <button type="submit">Sign in</button>
+            </form>
+         *
+         * You could optionally add CSRF-protection as outlined in the documentation:
+         * http://sailsjs.org/#!documentation/config.csrf
+         *
+         * A simple example of automatically listing all available providers in a
+         * Handlebars template would look like this:
+         *
+            {{#each providers}}
+                <a href="/auth/{{slug}}" role="button">{{name}}</a>
+            {{/each}}
+         */
+        login: function(req, res){
+            let strategies = config.passport.strategies;
+            let providers = {};
+
+            Object.keys(strategies).map((key)=>{
+                console.log('login: strategy key %s', key);
+                if (key === 'local' || key === 'bearer') return;
+
+                providers[key] = {
+                    label: strategies[key].label,
+                    slug: key
+                };
+                console.log('provider', providers[key]);
+            });
+
+            let locals = {
+                providers,
+                errors: res.flash('error')
+            };
+
+            res.render('login', locals);
+        },
         logout: function(req, res){
             /*
              * logout should be handled only
@@ -338,13 +381,16 @@ module.exports = function(app, config){
          *
          */
         callback: function (req, res){
-            let action = req.param('action');
+            let action = _param(req, 'action');
+            console.log('AuthController:callback action %s', action);
 
             passport.callback(req, res, (err, user, info, status)=>{
                 if(err || !user){
                     config.logger.warn(user, err, info, status);
                     return _negotiateError(res, err || info, action);
                 }
+
+                //TODO: Where do we apply filters?
 
                 req.login(user, (err)=>{
                     if(err){
@@ -354,12 +400,17 @@ module.exports = function(app, config){
 
                     req.session.authenticated = true;
 
+                    res.locals.user = user;
+
+                    config.logger.info('User authenticated OK %s', user);
+
                     if(req.query.next){
                         let url = _buildCallbacNextUrl(req);
                         res.status(302).set('Location', url);
+                        return res.json(user);
                     }
-                    config.logger.info('User authenticated OK %s', user);
-                    return res.json(user);
+
+                    res.redirect((req.session && req.session.returnTo) ? req.session.returnTo : '/');
                 });
             });
         },
@@ -371,6 +422,21 @@ module.exports = function(app, config){
         }
     };
 
+    function getView(app, status, defaultView='error'){
+        const path = require('path');
+        const views = app.get('views');
+        const ext = app.get('view engine');
+        const exists = require('fs').existsSync;
+
+        const view = path.join(views, status + '.' + ext);
+
+        if(exists(view)) return view;
+
+        if(app.parent) return getView(app.parent, status, defaultView);
+
+        return defaultView;
+    }
+
     function _negotiateError(res, err, action){
         if(action === 'register' || action === 'login'){
             return res.redirect('/' + action);
@@ -378,14 +444,34 @@ module.exports = function(app, config){
             return res.redirect('back');
         }
 
-        res.send(403, err);
+        console.log('----------........');
+        console.log(err);
+        console.log('----------........');
+        //TODO: Need a way to inherit views!!
+        //TODO: so myapp can reuse core views like
+        //TODO: error, 401, 500, etc.
+        res.status(403).format({
+            html: function(){
+                let view = getView(app, '401');
+                res.render(view, {
+                    message: err.message,
+                    error: err
+                });
+            },
+            json: function(){
+                res.send({
+                    message: err.message,
+                    error: err
+                });
+            }
+        });
     }
 
     function _buildCallbacNextUrl(req){
         const K = require('gkeypath');
 
+        let url = K.get(req, 'query.next');
         let includeToken = req.query.includeToken;
-        let url = K.get(req, 'session.returnTo', req.query.next);
         let accessToken = K.get(req, 'session.tokens.accessToken');
 
         if(includeToken && accessToken){
@@ -406,34 +492,40 @@ module.exports = function(app, config){
     let routeLocals = Keypath.get(config, 'routeLocals', {});
     let locals = extend({}, config.locals, routeLocals['/login']);
 
-    router.get('/login', function(req, res, next){
-        res.render('login', locals);
-    });
-
+    router.get('/login', AuthController.login);
     //TODO: config.routes.logout;
     router.get('/logout', AuthController.logout);
 
     /// THIS SHOULD BE OPTIONAL ////////////
-    router.get('/signup', function(req, res){
-        res.render('signup', locals);
-    });
+    router.get('/register', AuthController.register);
 
-    router.post('/signup', function(req, res){
-        // res.render('signup', locals);
-        createUser(req.body).then((user)=>{
-            res.flash('info', 'User ' + user.name + ' created.');
-            res.redirect('/login');
-        }).catch((err)=>{
-            locals.user = req.body;
-            res.render('signup', locals);
-        });
-    });
+    //This is equivalment to: /login
+    router.post('/auth/local', AuthController.callback);
+    router.post('/auth/local/:action', AuthController.callback);
+
+    router.post('/auth/:provider', AuthController.callback);
+    router.post('/auth/:provider/:action', AuthController.callback);
+
+    router.get('/auth/:provider', AuthController.provider);
+    router.get('/auth/:provider/callback', AuthController.callback);
+    router.get('/auth/:provider/:action', AuthController.callback);
+
+    // router.post('/signup', function(req, res){
+    //     PassportUser.create(req.body).then((user)=>{
+    //         res.flash('info', 'User ' + user.name + ' created.');
+    //         res.redirect('/login');
+    //     }).catch((err)=>{
+    //         locals.user = req.body;
+    //         res.render('signup', locals);
+    //     });
+    // });
     //////////////////////////////////////////
     /// LOAD STRATEGIES
     //////////////////////////////////////////
     /*
      * Default cleanUser function.
      */
+/*
     function _cleanUser(user){
         let clone = extend({}, user);
         delete clone.password;
@@ -449,7 +541,7 @@ module.exports = function(app, config){
                     error: params ? params.message : 'Invalid login'
                 });
             }
-            user = cleanUser(user);
+            user = user.toJSON();
 
             req.login(user, {}, error => {
                 if (error){
@@ -482,7 +574,7 @@ module.exports = function(app, config){
         let query = {};
         query[strategyConfig.usernameField || 'username'] = identifier;
 
-        return findOne(query).then((user) => {
+        return PassportUser.findOne(query).then((user) => {
             console.log('findOne:', identifier, user);
             if (!user) return false;
             authUser = user;
@@ -494,7 +586,7 @@ module.exports = function(app, config){
         })
         .catch(done);
     }));
-
+*/
 
 
     /*
@@ -504,3 +596,15 @@ module.exports = function(app, config){
 };
 
 module.exports.applyPolicies = require('./applyPolicies');
+
+function _param(req, name, def){
+    var body = req.body || {};
+    var query = req.query || {};
+    var params = req.params || {};
+
+    if (null != params[name] && params.hasOwnProperty(name)) return params[name];
+    if (null != body[name]) return body[name];
+    if (null != query[name]) return query[name];
+
+    return def;
+}
