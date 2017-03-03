@@ -63,8 +63,7 @@ initMyApp(context, {
                 label: 'Google',
                 protocol: 'oauth2',
                 strategy: require('passport-google-oauth20').Strategy,
-
-                restrictToDomain: 'peperone.com',
+                // restrictToDomain: 'peperone.com',
                 options: {
                     clientID: process.env.NODE_GOOGLE_CLIENT_ID || 'none',
                     clientSecret: process.env.NODE_GOOGLE_CLIENT_SECRET || 'none',
