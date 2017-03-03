@@ -11,13 +11,17 @@
 module.exports = function(passport, config){
     let Local = {};
 
+    let Passport = config.passport.getPassport();
+    let PassportUser = config.passport.getPassportUser();
+
     Local.createUser = function(_user, next){
         let accessToken = generateToken();
         let password = _user.password;
+
         delete _user.password;
 
-        return config.passport.model.createUser(_user).then((user)=>{
-            return config.passport.model.createPassport({
+        return PassportUser.create(_user).then((user)=>{
+            return Passport.create({
                 user: user.id,
                 protocol: 'local',
                 password: password,
@@ -29,7 +33,7 @@ module.exports = function(passport, config){
                 if(err.code === 'E_VALIDATION'){
                     // err = new SAError({originalError: err});
                 }
-                return config.passport.model.deleteUser(user).then(()=>{
+                return PassportUser.destroy(user).then(()=>{
                     next(err);
                 }).catch(next);
             });
@@ -60,14 +64,14 @@ module.exports = function(passport, config){
             return next(new Error('Invalid query'));
         }
 
-        return config.passport.model.updateUser(query, _user).then((user)=>{
+        return PassportUser.update(query, _user).then((user)=>{
             if(!user){
                 return next(new Error('Error creating user'));
             }
             if(Array.isArray(user)) user = user[0];
 
             if(!!password){
-                config.passport.model.findPassport({
+                Passport.findOne({
                     protocol: 'local',
                     user: user.id
                 }).then((passport)=>{
@@ -124,6 +128,15 @@ module.exports = function(passport, config){
         }).catch(next);
     };
 
+    /**
+     * Login method.
+     * @method login
+     * @param  {Object}   req        Express request
+     * @param  {String}   identifier Username|email
+     * @param  {String}   password
+     * @param  {Function} next
+     * @return {void}
+     */
     Local.login = function(req, identifier, password, next){
         let isEmail = validateEmail(identifier);
         let query = isEmail ? {email: identifier} : {username: identifier};
@@ -131,9 +144,9 @@ module.exports = function(passport, config){
         PassportUser.findOne(query).then((user)=>{
             if(!user){
                 if(isEmail){
-                    req.flash('error', 'Error.Passport.Email.NotFound');
+                    res.flash('error', 'Error.Passport.Email.NotFound');
                 } else {
-                    req.flash('error', 'Error.Passport.Username.NotFound');
+                    res.flash('error', 'Error.Passport.Username.NotFound');
                 }
                 return next(null, false);
             }
@@ -145,13 +158,13 @@ module.exports = function(passport, config){
                     return passport.validatePassword(password, (err, res)=>{
                         if(err) return next(err);
                         if(!res){
-                            req.flash('error', 'Error.Passport.Password.Wrong');
+                            res.flash('error', 'Error.Passport.Password.Wrong');
                             return next(null, false);
                         }
                         return next(null, user, passport);
                     });
                 }
-                req.flash('error', 'Error.Passport.Password.NotSet');
+                res.flash('error', 'Error.Passport.Password.NotSet');
                 return next(null, false);
             }).catch(next);
         }).catch(next);
