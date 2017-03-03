@@ -26,17 +26,7 @@ module.exports = function(app, config){
     config.logger.info(Object.keys(config));
 
     /*
-     * TODO: Normalize names. Should we match
-     * Waterline methods or have desriptive
-     * names?
-     * Make simple:
-     *
-     * getUser: function(){
-     *     return PassportUser;
-     * },
-     * getPassport: function(){
-     *     return Passport;
-     * }
+     * Need to validate this!!
      */
     let Passport = config.passport.getPassport();
     let PassportUser = config.passport.getPassportUser();
@@ -444,12 +434,6 @@ module.exports = function(app, config){
             return res.redirect('back');
         }
 
-        console.log('----------........');
-        console.log(err);
-        console.log('----------........');
-        //TODO: Need a way to inherit views!!
-        //TODO: so myapp can reuse core views like
-        //TODO: error, 401, 500, etc.
         res.status(403).format({
             html: function(){
                 let view = getView(app, '401');
@@ -489,6 +473,7 @@ module.exports = function(app, config){
      */
     let router = express.Router();
 
+    //TODO: Manage locals
     let routeLocals = Keypath.get(config, 'routeLocals', {});
     let locals = extend({}, config.locals, routeLocals['/login']);
 
@@ -509,85 +494,6 @@ module.exports = function(app, config){
     router.get('/auth/:provider', AuthController.provider);
     router.get('/auth/:provider/callback', AuthController.callback);
     router.get('/auth/:provider/:action', AuthController.callback);
-
-    // router.post('/signup', function(req, res){
-    //     PassportUser.create(req.body).then((user)=>{
-    //         res.flash('info', 'User ' + user.name + ' created.');
-    //         res.redirect('/login');
-    //     }).catch((err)=>{
-    //         locals.user = req.body;
-    //         res.render('signup', locals);
-    //     });
-    // });
-    //////////////////////////////////////////
-    /// LOAD STRATEGIES
-    //////////////////////////////////////////
-    /*
-     * Default cleanUser function.
-     */
-/*
-    function _cleanUser(user){
-        let clone = extend({}, user);
-        delete clone.password;
-        return clone;
-    }
-
-    router.post('/login', (req, res, next) => {
-        passport.authenticate('local', (err, user, params) => {
-            if (err) return next(err);
-            if (!user){
-                res.flash('error', 'Error.Passport.User.NotFound');
-                return res.status(401).json({
-                    error: params ? params.message : 'Invalid login'
-                });
-            }
-            user = user.toJSON();
-
-            req.login(user, {}, error => {
-                if (error){
-                    return res.status(500).json({error: error.message});
-                }
-
-                console.log('login: req.user', req.user);
-                res.locals.user = user;
-                res.redirect((req.session && req.session.returnTo) ? req.session.returnTo : '/');
-
-                return null;
-            });
-        })(req, res, next);
-    });
-
-    let LocalStrategy = require('passport-local');
-
-    let strategyConfig = {
-        usernameField: 'email',
-        passReqToCallback: true,
-        // usernameField: 'email',
-        // passwordField: 'passwd',
-        // session: false
-    };
-
-    passport.use(new LocalStrategy(strategyConfig,(req, identifier, password, done) => {
-        console.log('local strategy: id %s password %s', identifier, password);
-
-        let authUser;
-        let query = {};
-        query[strategyConfig.usernameField || 'username'] = identifier;
-
-        return PassportUser.findOne(query).then((user) => {
-            console.log('findOne:', identifier, user);
-            if (!user) return false;
-            authUser = user;
-            return crypto.compare(user, password);
-        }).then(isMatch => {
-            if (isMatch) done(null, authUser);
-            else done(null, false, {message: 'Incorrect email or password'});
-            return null;
-        })
-        .catch(done);
-    }));
-*/
-
 
     /*
      * Use all declared strategies
