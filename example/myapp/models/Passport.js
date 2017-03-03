@@ -18,16 +18,21 @@ let Passport = {
     findOne: function(...query){
         return Promise.resolve(_data[2]);
     },
-    create: function(passport){
-        console.log('createPassport', JSON.stringify(passport, null, 4));
+    create: function(record){
+        console.log('createPassport', JSON.stringify(record, null, 4));
 
-        passport.toJSON = function(){
+        ++_data._i;
+        let i = _data._i;
+        record.id = i;
+        _data[i] = record;
+
+        record.toJSON = function(){
             let clone = extend({}, this);
             delete clone.password;
             return clone;
         };
 
-        return Promise.resolve(passport);
+        return Promise.resolve(record);
     },
     destroy: function(user){
         return Promise.resolve();
