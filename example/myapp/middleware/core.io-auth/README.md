@@ -23,3 +23,13 @@
 - `GET /auth/:provider`: 'AuthController.provider',
 - `GET /auth/:provider/callback`: 'AuthController.callback',
 - `GET /auth/:provider/:action`: 'AuthController.callback'
+
+
+### TODO
+- [ ] Manage locals index.js L-482
+- [ ] Pull routes from config
+- [ ] Normalize config:
+    - config.passport -> config
+- [ ] Make filters so that we handle `restrictToDomain` as a generic filter
+    - i.e check that a user who's been banned doesn't log in again.
+- [ ] Check how we should use scope in oAuth2 to restrict by domain.
