@@ -12,14 +12,14 @@ let _data = {
 };
 
 let PassportUser = {
-    findUserById: function(id){
+    findOneById: function(id){
         return Promise.resolve(_data[id]);
     },
     findOne: function(...query){
         return Promise.resolve(_data[2]);
     },
-    createUser: function(user){
-        console.log('createUser', JSON.stringify(user, null, 4));
+    create: function(user){
+        console.log('PassportUser:create', JSON.stringify(user, null, 4));
 
         const cryptoUtils = require('../middleware/core.io-auth/cryptoUtils');
         ++_data._i;
@@ -27,25 +27,23 @@ let PassportUser = {
         user.id = i;
         _data[i] = user;
 
-        return cryptoUtils.hash(user).then((user)=>{
-            console.log('Added user:', user);
-            console.log(Object.keys(_data));
-            return user;
-        });
+        user.toJSON = function(){
+            let clone = extend({}, this);
+            delete clone.password;
+            return clone;
+        };
+        return Promise.resolve(user);
+
+        // return cryptoUtils.hash(user).then((user)=>{
+        //     console.log('Added user:', user);
+        //     console.log(Object.keys(_data));
+        //     return user;
+        // });
     },
-    createPassport: function(passport){
-        console.log('createPassport', JSON.stringify(passport, null, 4));
-        return Promise.resolve(passport);
-    },
-    cleanUser: function(user){
-        let clone = extend({}, user);
-        delete clone.password;
-        return clone;
-    },
-    deleteUser: function(user){
+    destroy: function(query){
         return Promise.resolve();
     },
-    updateUser: function(user){
+    update: function(user){
         return Promise.resolve();
     }
 };
