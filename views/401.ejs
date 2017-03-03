@@ -7,6 +7,14 @@
         You need to log in.
     <% } %>
     </h2>
+
+    <% if (flash) {
+        Object.keys(flash).map((key)=>{
+    %>
+            <p><%= flash[key] %></p>
+    <%  });
+    } %>
+
     <p class="help">
         <a href="http://en.wikipedia.org/wiki/HTTP_401">Why</a> might this be happening?
     </p>
