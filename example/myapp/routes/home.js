@@ -16,6 +16,14 @@ module.exports = function(app, config){
         }));
     });
 
+    router.get('/api/health', (req, res, next)=>{
+        req._passport.instance.authenticate('bearer', {session: false})(req, res, next);
+    }, (req, res)=>{
+        res.send({
+            ok: true
+        });
+    });
+
     router.get('/testing', [], (req, res)=>{
         console.log('/testing');
         res.status(200).send('<b>Testing</b>');
