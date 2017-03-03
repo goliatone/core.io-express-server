@@ -16,14 +16,17 @@
  * ?access_token=UN2s4fLxo1QmMhOpsK4ZgUvt4
  */
 module.exports = function(passport, config){
+    let Passport = config.passport.getPassport();
+    let PassportUser = config.passport.getPassportUser();
 
     return  function $bearer(req, token, done){
 
-        config.passport.model.findOne({accessToken: token}).then((passport)=>{
+        return Passport.findOne({accessToken: token}).then((passport)=>{
 
             if(!passport) return done(null, false);
 
-            return config.passport.model.findOne({id: passport.user}).then((user)=>{
+            return PassportUser.findOne({id: passport.user}).then((user)=>{
+
                 if(!user) return done(null, false);
 
                 /*
