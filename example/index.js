@@ -3,7 +3,8 @@
 
 const extend = require('gextend');
 
-const PassportModel = require('./myapp/models/PassportUser');
+const Passport = require('./myapp/models/Passport');
+const PassportUser = require('./myapp/models/PassportUser');
 
 /*
  * This is a mock object providing
@@ -27,12 +28,13 @@ let context = {
 };
 
 const initServer = require('..').init;
-const initMyApp = require('..').initializeSubapp('root');
+const initMyApp = require('..').initializeSubapp('myapp');
 
 
 initMyApp(context, {
     mount: '/',
     moduleid: 'myapp',
+    baseUrl: 'http://localhost:1337',
     locals: {
         title: 'MyApp Test',
         layout: 'layout'
@@ -46,9 +48,30 @@ initMyApp(context, {
          * - createUser
          * - cleanUser
          */
-        model: PassportModel,
+        getPassportUser: function(){
+            return PassportUser;
+        },
+        getPassport: function(){
+            return Passport;
+        },
         strategies: {
-            google:{}
+            bearer: {
+                strategy: require('passport-http-bearer').Strategy,
+                protocol: 'bearer'
+            },
+            google: {
+                label: 'Google',
+                protocol: 'oauth2',
+                strategy: require('passport-google-oauth20').Strategy,
+
+                restrictToDomain: 'peperone.com',
+                options: {
+                    clientID: process.env.NODE_GOOGLE_CLIENT_ID || 'none',
+                    clientSecret: process.env.NODE_GOOGLE_CLIENT_SECRET || 'none',
+                    callbackURL: process.env.NODE_CLIENT_BASE_URL + '/auth/google/callback',
+                    scope: ['profile', 'email']
+                }
+            }
         }
     },
     policies: {
@@ -84,4 +107,6 @@ initMyApp(context, {
     }
 });
 
-initServer(context, {});
+initServer(context, {
+    port: 1337
+});
