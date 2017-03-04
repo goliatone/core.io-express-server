@@ -2,6 +2,7 @@
 'use strict';
 
 const extend = require('gextend');
+const cryptoUtils = require('core.io-express-auth').cryptoUtils;
 
 let _data = {
     _i: 1,
@@ -33,10 +34,14 @@ let Passport = {
         };
 
         record.validatePassword = function(password){
-            return Promise.resolve(password);
+            return cryptoUtils.compare(this, password);
         };
 
-        return Promise.resolve(record);
+        return cryptoUtils.hash(record).then((record)=>{
+            console.log('Added Passport:', record);
+            console.log(Object.keys(_data));
+            return record;
+        });
     },
     destroy: function(user){
         return Promise.resolve();
