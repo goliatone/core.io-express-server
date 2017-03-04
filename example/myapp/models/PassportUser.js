@@ -33,12 +33,6 @@ let PassportUser = {
         };
 
         return Promise.resolve(user);
-
-        // return cryptoUtils.hash(user).then((user)=>{
-        //     console.log('Added user:', user);
-        //     console.log(Object.keys(_data));
-        //     return user;
-        // });
     },
     destroy: function(query){
         return Promise.resolve();
