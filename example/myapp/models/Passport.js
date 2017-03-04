@@ -32,6 +32,10 @@ let Passport = {
             return clone;
         };
 
+        record.validatePassword = function(password){
+            return Promise.resolve(password);
+        };
+
         return Promise.resolve(record);
     },
     destroy: function(user){
