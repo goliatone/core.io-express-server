@@ -31,7 +31,7 @@ let PassportUser = {
             delete clone.password;
             return clone;
         };
-        
+
         return Promise.resolve(user);
 
         // return cryptoUtils.hash(user).then((user)=>{

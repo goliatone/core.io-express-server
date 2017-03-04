@@ -4,7 +4,7 @@
 const extend = require('gextend');
 const express = require('express');
 const router = express.Router();
-const applyPolicies = require('../middleware/core.io-auth').applyPolicies;
+const applyPolicies = require('core.io-express-auth').applyPolicies;
 
 module.exports = function(app, config){
 
