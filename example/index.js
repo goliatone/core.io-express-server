@@ -59,9 +59,13 @@ initMyApp(context, {
                 protocol: 'local',
                 strategy: require('passport-local').Strategy
             },
+            basic: {
+                protocol: 'basic',
+                strategy: require('passport-http').BasicStrategy
+            },
             bearer: {
-                strategy: require('passport-http-bearer').Strategy,
-                protocol: 'bearer'
+                protocol: 'bearer',
+                strategy: require('passport-http-bearer').Strategy
             },
             google: {
                 label: 'Google',
@@ -79,8 +83,11 @@ initMyApp(context, {
     },
     policies: {
         'GET /profile': [
-            require('./myapp/middleware/isAuthenticated')
+            require('core.io-express-auth').policies.isAuthenticated
         ],
+        'GET /api/health':[
+            require('core.io-express-auth').policies.bearer
+        ]
     },
 
     middleware: {
@@ -98,7 +105,6 @@ initMyApp(context, {
             'bodyParser',
             'cookieParser',
             'session',
-            // 'isAuthenticated',
             'flash',
             'passport',
             'expressStatic',
