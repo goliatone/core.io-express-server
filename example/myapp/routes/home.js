@@ -16,9 +16,9 @@ module.exports = function(app, config){
         }));
     });
 
-    router.get('/api/health', (req, res, next)=>{
-        req._passport.instance.authenticate('bearer', {session: false})(req, res, next);
-    }, (req, res)=>{
+    policies = applyPolicies('GET /api/health', app, config);
+
+    router.get('/api/health', policies, (req, res)=>{
         res.send({
             ok: true
         });
