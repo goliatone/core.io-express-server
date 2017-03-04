@@ -34,7 +34,7 @@ const initMyApp = require('..').initializeSubapp('myapp');
 initMyApp(context, {
     mount: '/',
     moduleid: 'myapp',
-    baseUrl: 'http://localhost:1337',
+    baseUrl: 'http://localhost:3000',
     locals: {
         title: 'MyApp Test',
         layout: 'layout'
@@ -55,6 +55,10 @@ initMyApp(context, {
             return Passport;
         },
         strategies: {
+            local: {
+                protocol: 'local',
+                strategy: require('passport-local').Strategy
+            },
             bearer: {
                 strategy: require('passport-http-bearer').Strategy,
                 protocol: 'bearer'
@@ -80,7 +84,7 @@ initMyApp(context, {
     },
 
     middleware: {
-        passport: require('./myapp/middleware/core.io-auth'),
+        passport: require('core.io-express-auth'),
         /*
          * This actually indicates which middleware
          * to use.
@@ -107,5 +111,5 @@ initMyApp(context, {
 });
 
 initServer(context, {
-    port: 1337
+    port: 3000
 });
