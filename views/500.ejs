@@ -3,8 +3,9 @@
     <h2>Something isn't right here.</h2>
     <% if (typeof error !== 'undefined') { %>
         <pre class="error">
+            Error:
             <code>
-                <%- error %>
+                <%- JSON.stringify(error) %>
             </code>
         </pre>
     <% } else { %>
@@ -14,6 +15,7 @@
     <% } %>
     <% if (typeof stack !== 'undefined') { %>
         <pre class="error">
+            Stack:
             <code>
                 <%- stack %>
             </code>
