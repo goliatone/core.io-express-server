@@ -10,6 +10,15 @@ Express server module.
     - `process.env.NODE_APP_PORT`
     - 3000
 - `basedir`: Used to create the path to `views` and `public`.
+- `locals`: It will be made available to all requests through [app.locals](http://expressjs.com/en/api.html#app.locals).
+- `routeLocas`:  Specify locals per route. Example:
+```js
+routeLocals: {
+    '/admin': {
+        layout: require('path').resolve('./modules/dashboard/views/layout.ejs')
+    }
+}
+```
 
 ### TODO
 - [ ] Handle unique assets, like favicon.
