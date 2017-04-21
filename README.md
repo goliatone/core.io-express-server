@@ -20,12 +20,18 @@ routeLocals: {
 }
 ```
 
+NOTE: Good idea to name all functions passed to `app.use` or `router.use`. Makes it easier to debug, which is true in general, since otherwise you would see `<anonymous>` as the output.
+
 ### TODO
 - [ ] Handle unique assets, like favicon.
     config: { favicon: <ABSOLUTE_PATH>}
 - [ ] Provide a way to override layout for error.ejs
 - [ ] Default app: take config options
     - merge middleware
+- [ ] Asset pipeline:
+    - [mincer][mincer] package
+
+[mincer]:https://github.com/nodeca/mincer
 
 <!--
 Integrate with:
@@ -35,6 +41,8 @@ https://github.com/apiaryio/dredd
 https://apiblueprint.org/tools.html
 
 https://github.com/expressjs/vhost
+
+https://github.com/Pavel-Demidyuk/express-paginate-bacon/blob/master/index.js
 
 Create responses:
 res.ok();
