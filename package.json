@@ -4,7 +4,8 @@
   "description": "core.io Express server module",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "test": "npm test",
+    "patch": "npm version patch && npm publish && git push --tags && git push origin master",
   },
   "repository": {
     "type": "git",
