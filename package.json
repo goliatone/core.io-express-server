@@ -32,6 +32,7 @@
     "express": "^4.14.1",
     "express-ejs-layouts": "^2.2.0",
     "express-flash-2": "^1.0.1",
+    "express-list-endpoints": "^3.0.0",
     "express-session": "^1.15.1",
     "gextend": "^0.3.0",
     "gkeypath": "^0.7.0",
