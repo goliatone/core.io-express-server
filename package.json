@@ -30,7 +30,7 @@
     "csurf": "^1.9.0",
     "ejs": "^2.5.6",
     "express": "^4.14.1",
-    "express-ejs-layouts": "^2.2.0",
+    "express-ejs-layouts": "git+ssh://git@github.com/goliatone/express-ejs-layouts.git#fix_render_assignment",
     "express-flash-2": "^1.0.1",
     "express-list-endpoints": "^3.0.0",
     "express-session": "^1.15.1",
