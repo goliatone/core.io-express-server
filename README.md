@@ -52,4 +52,8 @@ res.sendError();
 https://github.com/balderdashy/sails/blob/e7947170dd60a96fb5cdac2ab00de170d6854074/lib/hooks/responses/defaults/notFound.js
 
 https://github.com/selcukfatihsevinc/app.io
+
+express-paginate
+https://github.com/expressjs/express-paginate
+https://github.com/Pavel-Demidyuk/express-paginate-bacon/
 -->
