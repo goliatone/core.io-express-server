@@ -33,6 +33,39 @@ NOTE: Good idea to name all functions passed to `app.use` or `router.use`. Makes
 
 [mincer]:https://github.com/nodeca/mincer
 
+
+### Final Error Handler
+For API calls:
+
+```js
+res.send({
+    success: false,
+    message: error.message
+});
+```
+#### Custom Error views
+
+If our sub-app has the following view structure:
+
+```
+.
+├── views
+│   ├── error-layout.ejs
+│   ├── 401.ejs
+│   └── 403.ejs
+```
+
+The error view will be rendered with the following locals:
+
+```js
+let locals = {
+    isErrorView: true,
+    status: status,
+    message: err.message,
+    error: err
+};
+```
+
 <!--
 Integrate with:
 For the API part. Or maybe just the CRUD module?
