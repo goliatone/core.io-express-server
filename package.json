@@ -1,6 +1,6 @@
 {
   "name": "core.io-express-server",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "description": "core.io Express server module",
   "main": "index.js",
   "scripts": {
